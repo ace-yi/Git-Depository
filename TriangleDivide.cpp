@@ -49,7 +49,6 @@ void funcprint(O3DPoint *A, O3DPoint *B, O3DPoint *C);
 
 int main()
 {
-	//vtkSmartPointer<vtkIdList> idList = vtkSmartPointer<vtkIdList>::New();
 	vtkSmartPointer<vtkPolyData> data = vtkSmartPointer<vtkPolyData>::New();
 	vtkSmartPointer<vtkPoints> surfacePoints = vtkSmartPointer<vtkPoints>::New();
 	vtkSmartPointer<vtkCellArray> surfacePoly = vtkSmartPointer<vtkCellArray>::New();
@@ -95,6 +94,7 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 {
 	///////////////////////////////////
 	//                top            //
+	//                / \            //
 	//               /   \           //
 	//              /     \          //
 	//             /       \         //
@@ -104,7 +104,7 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 	O3DPoint *Pbottom1 = new O3DPoint(0, 0, 0), *Pbottom2 = new O3DPoint(0, 0, 0), *Ptop = new O3DPoint(0, 0, 0), *Pbottom1next = new O3DPoint(0, 0, 0), *Pbottom2next = new O3DPoint(0, 0, 0), *A = new O3DPoint(0, 0, 0), *B = new O3DPoint(0, 0, 0), *C = new O3DPoint(0, 0, 0), *D = new O3DPoint(0, 0, 0);
 
 
-	//getbottom,the longest line
+	//getbottom,the longest line,for the shortest iteration times
 	float p1p2, p1p3, p2p3, topb1;
 	p1p2 = (p1->x - p2->x)*(p1->x - p2->x) + (p1->y - p2->y)*(p1->y - p2->y) + (p1->z - p2->z)*(p1->z - p2->z);
 	p1p2 = sqrt(p1p2);
@@ -113,57 +113,18 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 	p2p3 = (p2->x - p3->x)*(p2->x - p3->x) + (p2->y - p3->y)*(p2->y - p3->y) + (p2->z - p3->z)*(p2->z - p3->z);
 	p2p3 = sqrt(p2p3);
 	if ((p1p2 >= p1p3) && (p1p2 >= p2p3)){
-		/*
-		Pbottom1->x = p1->x;
-		Pbottom1->y = p1->y;
-		Pbottom1->z = p1->z;
-		Pbottom2->x = p2->x;
-		Pbottom2->y = p2->y;
-		Pbottom2->z = p2->z;
-		Ptop->x = p3->x;
-		Ptop->y = p3->y;
-		Ptop->z = p3->z;
-		*/
-		//PointEqual(Pbottom1, p1);
-		//PointEqual(Pbottom2, p2);
-		//PointEqual(Ptop, p3);
 		Pbottom1->assign(p1);
 		Pbottom2->assign(p2);
 		Ptop->assign(p3);
 		topb1 = p1p3;
 	}
 	else if ((p1p3 >= p1p2) && (p1p3 >= p2p3)){
-		/*
-		Pbottom1->x = p1->x;
-		Pbottom1->y = p1->y;
-		Pbottom1->z = p1->z;
-		Pbottom2->x = p3->x;
-		Pbottom2->y = p3->y;
-		Pbottom2->z = p3->z;
-		Ptop->x = p2->x;
-		Ptop->y = p2->y;
-		Ptop->z = p2->z;
-		*/
-		//PointEqual(Pbottom1,p1);
-		//PointEqual(Pbottom2,p3);
-		//PointEqual(Ptop,p2);
 		Pbottom1->assign(p1);
 		Pbottom2->assign(p3);
 		Ptop->assign(p2);
 		topb1 = p1p2;
 	}
 	else{
-		/*
-		Pbottom1->x = p2->x;
-		Pbottom1->y = p2->y;
-		Pbottom1->z = p2->z;
-		Pbottom2->x = p3->x;
-		Pbottom2->y = p3->y;
-		Pbottom2->z = p3->z;
-		Ptop->x = p1->x;
-		Ptop->y = p1->y;
-		Ptop->z = p1->z;
-		*/
 		Pbottom1->assign(p2);
 		Pbottom2->assign(p3);
 		Ptop->assign(p1);
@@ -174,7 +135,6 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 	int k = topb1 / steplength + 0.5;
 
 	// step from current bottom to next bottom
-	//float b1stepx, b1stepy, b1stepz, b2stepx, b2stepy, b2stepz;
 	O3DPoint *b1step = new O3DPoint(0, 0, 0);
 	O3DPoint *b2step = new O3DPoint(0, 0, 0);
 	float stepratio = (float)1 / k;
@@ -184,7 +144,17 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 	b2step->x = stepratio * (Ptop->x - Pbottom2->x);
 	b2step->y = stepratio * (Ptop->y - Pbottom2->y);
 	b2step->z = stepratio * (Ptop->z - Pbottom2->z);
-	//float stepACx, stepACy, stepACz;
+
+	//       A
+	//       |\
+	//       | \
+	//       B---C(A')
+	//        \  |\
+	//         \ | \
+	//        D(B')-C'(B'')                                         bottom1(A)                 bottom2(B)-top(C)
+	// A + b1step = B                                                   |\                               \  |
+	// A + stepAC = C   or A+b1step-b2step = C                          | \                               \ |
+	// B + stepAC = D                                             top(B)-bottom2(C)                     bottom1(D)
 	O3DPoint *stepAC = new O3DPoint(0,0,0);
 	stepAC->x = stepratio * (Pbottom2->x - Pbottom1->x);
 	stepAC->y = stepratio * (Pbottom2->y - Pbottom1->y);
@@ -192,46 +162,31 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 
 	//divide from the bottom to top
 	for (int i = 0; i < k - 1; i++){
-		//printf
-		//printf("Layer %d\n",k);
-		/*
-		Pbottom1next->x = Pbottom1->x + b1stepx;
-		Pbottom1next->y = Pbottom1->y + b1stepy;
-		Pbottom1next->z = Pbottom1->z + b1stepz;
-		Pbottom2next->x = Pbottom2->x + b2stepx;
-		Pbottom2next->y = Pbottom2->y + b2stepy;
-		Pbottom2next->z = Pbottom2->z + b2stepz;
-		*/
+		// tell which layer it is now and how many triangles in this layer
+		printf("Layer %d contains %d triangles\n", k-i, (2*k-2*i-1));
+		//divide from Pbottom1 and Pbottom1next
+		//             Pbottom1 
+		//                ^
+		//                |\
+		//                | \
+		//   Pbottom1next ^\ \
+		//                  \ \
+		//                   \ \
+		//                    \_\
+		//        Pbottom2next^  ^
+		//                       Pbottom2
+
+		//get Pbottomnext at the beginning of the loop
 		Pbottom1next->PointSum(Pbottom1, b1step);
 		Pbottom2next->PointSum(Pbottom2, b2step);
-		//       A
-		//       |\
-		//       | \
-		//       B---C(A')
-		//        \  |\
-		//         \ | \
-		//        D(B')-C'(B'')                     bottom1(A)                 bottom2(B)-top(C)
-		// A + b1step = B                             |\                               \  |
-		// A + stepAC = C                             | \                               \ |
-		// B + stepAC = D                         top(B)-bottom2(C)                     bottom1(D)
 		
-		/*
-		A->x = Pbottom1->x;
-		A->y = Pbottom1->y;
-		A->z = Pbottom1->z;
-		B->x = Pbottom1next->x;
-		B->y = Pbottom1next->y;
-		B->z = Pbottom1next->z;
-		*/
+		//process the first triangle
 		A->assign(Pbottom1);
 		B->assign(Pbottom1next);
 		C->PointSum(A, stepAC);
-		/*
-		C->x = A->x + stepAC->x;
-		C->y = A->y + stepAC->y;
-		C->z = A->z + stepAC->z;
-		*/
-		//func B(top) A(bottom1) C(bottom2)
+		
+		//save B(top) A(bottom1) C(bottom2) and show
+		printf("triangle no: 1\n");
 		funcprint(B, A, C);
 		int a, b, c;
 		vtkSmartPointer<vtkIdList> idList = vtkSmartPointer<vtkIdList>::New();
@@ -243,25 +198,14 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 		idList->InsertNextId(c);
 		surfacepoly->InsertNextCell(idList);
 		
+		//process following triangles in this layer
 		for (int j = 1; j < (1 + 2 * (k - i - 1)); j++){
 			if (j % 2 == 0){
-				/*
-				A->x = C->x;
-				A->y = C->y;
-				A->z = C->z;
-				B->x = D->x;
-				B->y = D->y;
-				B->z = D->z;
-				*/
 				A->assign(C);
 				B->assign(D);
-				/*
-				C->x = A->x + stepAC->x;				
-				C->y = A->y + stepAC->y;				
-				C->z = A->z + stepAC->z;
-				*/
 				C->PointSum(A, stepAC);
-				//func B(top) A(bottom1) C(bottom2)
+				//save B(top) A(bottom1) C(bottom2)
+				printf("triangle no: %d\n",j+1);
 				funcprint(B, A, C);
 				int a, b, c;
 				vtkSmartPointer<vtkIdList> idList = vtkSmartPointer<vtkIdList>::New();
@@ -274,13 +218,9 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 				surfacepoly->InsertNextCell(idList);
 			}
 			else{
-				/*
-				D->x = B->x + stepACx;
-				D->y = B->y + stepACy;
-				D->z = B->z + stepACz;
-				*/
 				D->PointSum(B,stepAC);
-				//func C(top) D(bottom1) B(bottom2)
+				//save C(top) D(bottom1) B(bottom2)
+				printf("triangle no: %d\n", j + 1);
 				funcprint(C, D, B);
 				int a, b, c;
 				vtkSmartPointer<vtkIdList> idList = vtkSmartPointer<vtkIdList>::New();
@@ -293,12 +233,13 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 				surfacepoly->InsertNextCell(idList);
 			}
 		}
+		//change the value of Pbottom at the end of loop for the next loop
 		Pbottom1->assign(Pbottom1next);
 		Pbottom2->assign(Pbottom2next);
 	}
 
 	//the last single triangle
-	printf("Layer %d\n", 1);
+	printf("Layer 1 contains 1 triangle\n");
 	funcprint(Ptop, Pbottom1, Pbottom2);
 	int a, b, c;
 	vtkSmartPointer<vtkIdList> idList = vtkSmartPointer<vtkIdList>::New();
@@ -314,16 +255,8 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 
 void funcprint(O3DPoint *A, O3DPoint *B, O3DPoint *C)
 {
-	printf("(%3f %3f %3f)\n", A->x, A->y, A->z);
-	printf("(%3f %3f %3f)\n", B->x, B->y, B->z);
-	printf("(%3f %3f %3f)\n", C->x, C->y, C->z);
+	printf("(%.3f %.3f %.3f)\n", A->x, A->y, A->z);
+	printf("(%.3f %.3f %.3f)\n", B->x, B->y, B->z);
+	printf("(%.3f %.3f %.3f)\n", C->x, C->y, C->z);
 	printf("\n");
 }
-/*
-void PointEqual(O3DPoint *A, O3DPoint *B)
-{
-	A->x = B->x;
-	A->y = B->y;
-	A->z = B->z;
-}
-*/

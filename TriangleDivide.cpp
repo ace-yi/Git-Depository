@@ -107,11 +107,11 @@ void DivideTriangle(O3DPoint *p1, O3DPoint *p2, O3DPoint *p3, int steplength, vt
 	//getbottom,the longest line,for the shortest iteration times
 	float p1p2, p1p3, p2p3, topb1;
 	p1p2 = (p1->x - p2->x)*(p1->x - p2->x) + (p1->y - p2->y)*(p1->y - p2->y) + (p1->z - p2->z)*(p1->z - p2->z);
-	p1p2 = sqrt(p1p2);
+	p1p2 = sqrtf(p1p2);
 	p1p3 = (p1->x - p3->x)*(p1->x - p3->x) + (p1->y - p3->y)*(p1->y - p3->y) + (p1->z - p3->z)*(p1->z - p3->z);
-	p1p3 = sqrt(p1p3);
+	p1p3 = sqrtf(p1p3);
 	p2p3 = (p2->x - p3->x)*(p2->x - p3->x) + (p2->y - p3->y)*(p2->y - p3->y) + (p2->z - p3->z)*(p2->z - p3->z);
-	p2p3 = sqrt(p2p3);
+	p2p3 = sqrtf(p2p3);
 	if ((p1p2 >= p1p3) && (p1p2 >= p2p3)){
 		Pbottom1->assign(p1);
 		Pbottom2->assign(p2);
